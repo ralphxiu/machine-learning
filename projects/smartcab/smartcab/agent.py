@@ -45,6 +45,7 @@ class LearningAgent(Agent):
         else:
             self.alpha = 0.001
             self.epsilon = math.exp(- self.alpha * self.time_step)
+            #self.epsilon = self.epsilon - 0.05
             self.time_step = self.time_step + 1
 
         return None
@@ -69,7 +70,7 @@ class LearningAgent(Agent):
         # With the hand-engineered features, this learning process gets entirely negated.
         
         # Set 'state' as a tuple of relevant data for the agent        
-        state = (waypoint, inputs['light'], inputs['oncoming'], inputs['left'], inputs['right']);
+        state = (waypoint, inputs['light'], inputs['oncoming'], inputs['left']);
 
         return state
 
@@ -117,18 +118,12 @@ class LearningAgent(Agent):
         # When learning, choose a random action with 'epsilon' probability
         # Otherwise, choose an action with the highest Q-value for the current state
         # Be sure that when choosing an action with highest Q-value that you randomly select between actions that "tie".
-        
+
         if self.learning == False or self.epsilon > random.random():
             return random.choice(self.valid_actions)
         else:
-            max_val = self.get_maxQ(state)
-
-            actions = []
-
-            for act, reward in self.Q[state].iteritems():
-                if reward == max_val:
-                    actions.append(act)
-            return random.choice(actions)
+            best_actions = [action for action in self.valid_actions if self.Q[state][action] == self.get_maxQ(state)]
+            return random.choice(best_actions)
 
 
     def learn(self, state, action, reward):
@@ -201,7 +196,7 @@ def run():
     # Flags:
     #   tolerance  - epsilon tolerance before beginning testing, default is 0.05 
     #   n_test     - discrete number of testing trials to perform, default is 0
-    sim.run(n_test=50, tolerance=0.010)
+    sim.run(n_test=200, tolerance=0.01)
 
 
 if __name__ == '__main__':
