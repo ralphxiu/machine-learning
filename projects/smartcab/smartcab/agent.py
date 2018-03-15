@@ -8,7 +8,7 @@ class LearningAgent(Agent):
     """ An agent that learns to drive in the Smartcab world.
         This is the object you will be modifying. """ 
 
-    def __init__(self, env, learning=False, epsilon=1.0, alpha=0.5):
+    def __init__(self, env, learning=False, default_learning=False, epsilon=1.0, alpha=0.5):
         super(LearningAgent, self).__init__(env)     # Set the agent in the evironment 
         self.planner = RoutePlanner(self.env, self)  # Create a route planner
         self.valid_actions = self.env.valid_actions  # The set of valid actions
@@ -23,7 +23,10 @@ class LearningAgent(Agent):
         ## TO DO ##
         ###########
         # Set any additional class parameters as needed
+        self.a = 0.002
+        self.k = 4
         self.time_step = 1
+        self.default_learning = default_learning
 
     def reset(self, destination=None, testing=False):
         """ The reset function is called at the beginning of each trial.
@@ -43,9 +46,11 @@ class LearningAgent(Agent):
             self.alpha = 0
             self.epsilon = 0
         else:
-            self.alpha = 0.001
-            self.epsilon = math.exp(- self.alpha * self.time_step)
-            #self.epsilon = self.epsilon - 0.05
+            if self.default_learning:
+                self.epsilon = self.epsilon - 0.05
+            else:
+                self.epsilon = 1 - (1 / (1 + math.exp(- self.k * self.a * self.time_step)))
+                self.alpha = 0.5 * math.exp(- self.a * self.time_step)
             self.time_step = self.time_step + 1
 
         return None
@@ -166,7 +171,7 @@ def run():
     #   verbose     - set to True to display additional output from the simulation
     #   num_dummies - discrete number of dummy agents in the environment, default is 100
     #   grid_size   - discrete number of intersections (columns, rows), default is (8, 6)
-    env = Environment(verbose=True, grid_size=(8, 6))
+    env = Environment(verbose=True)
     
     ##############
     # Create the driving agent
@@ -174,7 +179,7 @@ def run():
     #   learning   - set to True to force the driving agent to use Q-learning
     #    * epsilon - continuous value for the exploration factor, default is 1
     #    * alpha   - continuous value for the learning rate, default is 0.5
-    agent = env.create_agent(LearningAgent, learning=True)
+    agent = env.create_agent(LearningAgent, learning=True, default_learning=True)
     
     ##############
     # Follow the driving agent
@@ -189,14 +194,14 @@ def run():
     #   display      - set to False to disable the GUI if PyGame is enabled
     #   log_metrics  - set to True to log trial and simulation results to /logs
     #   optimized    - set to True to change the default log file name
-    sim = Simulator(env, update_delay=0.01, log_metrics=True, optimized=True, display=False)
+    sim = Simulator(env, update_delay=0.01, log_metrics=True, optimized=False, display=False)
     
     ##############
     # Run the simulator
     # Flags:
     #   tolerance  - epsilon tolerance before beginning testing, default is 0.05 
     #   n_test     - discrete number of testing trials to perform, default is 0
-    sim.run(n_test=200, tolerance=0.01)
+    sim.run(n_test=10, tolerance=0.01)
 
 
 if __name__ == '__main__':
